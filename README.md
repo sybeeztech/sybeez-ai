@@ -12,15 +12,58 @@ A powerful, feature-rich ChatGPT-like interface with multiple AI provider suppor
 
 ## 🚀 Quick Start
 
+### Local Development
 1. **Clone & Install**
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/sybeeztech/sybeez-ai.git
    cd sybeez-ai
    npm install
+   ```
+
+2. **Set up API Keys** (Optional - can also be done in the UI)
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local and add your API keys
+   ```
+
+3. **Start Development Server**
+   ```bash
    npm run dev
    ```
 
-2. **Setup AI Provider** (Choose one):
+### 🌐 Deploy to AWS Amplify
+
+1. **Connect Repository**
+   - Go to [AWS Amplify Console](https://console.aws.amazon.com/amplify/)
+   - Click "New app" → "Host web app" → "GitHub"
+   - Select this repository
+
+2. **Configure Environment Variables** (Optional)
+   
+   **If Environment Variables option is available:**
+   - Go to App Settings → Environment Variables (or Build Settings → Environment Variables)
+   - Add: `VITE_OPENAI_API_KEY` = `your-openai-key`
+   - Add other AI provider keys as needed
+   
+   **If Environment Variables option is NOT available:**
+   - Don't worry! Users can configure API keys directly in the deployed app
+   - Skip to step 3
+
+3. **Deploy**
+   - Amplify automatically builds and deploys
+   - Your app will be live at: `https://your-app.amplifyapp.com`
+
+4. **Setup AI Provider** (If no environment variables were set)
+   - Open your deployed app
+   - Click **Settings** (⚙️) in the sidebar
+   - Go to **AI Setup** tab
+   - Select your preferred AI provider
+   - Enter your API key
+   - Click **Save & Test Connection**
+
+📖 **Detailed deployment guide**: See [AMPLIFY_DEPLOYMENT.md](AMPLIFY_DEPLOYMENT.md)
+
+## ⚙️ Setup AI Provider (Choose one):
    
    **Option A: Google Gemini (Free & Easy)**
    - Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
