@@ -31,37 +31,16 @@ A powerful, feature-rich ChatGPT-like interface with multiple AI provider suppor
    npm run dev
    ```
 
-### 🌐 Deploy to AWS Amplify
+### 🌐 Deploy to Any Platform
 
-1. **Connect Repository**
-   - Go to [AWS Amplify Console](https://console.aws.amazon.com/amplify/)
-   - Click "New app" → "Host web app" → "GitHub"
-   - Select this repository
+**Vercel (Recommended):**
+1. Go to [vercel.com](https://vercel.com) → Import Git Repository
+2. Select your repository → Deploy
+3. Configure AI keys through the app's Settings UI
 
-2. **Configure Environment Variables** (Optional)
-   
-   **If Environment Variables option is available:**
-   - Go to App Settings → Environment Variables (or Build Settings → Environment Variables)
-   - Add: `VITE_OPENAI_API_KEY` = `your-openai-key`
-   - Add other AI provider keys as needed
-   
-   **If Environment Variables option is NOT available:**
-   - Don't worry! Users can configure API keys directly in the deployed app
-   - Skip to step 3
-
-3. **Deploy**
-   - Amplify automatically builds and deploys
-   - Your app will be live at: `https://your-app.amplifyapp.com`
-
-4. **Setup AI Provider** (If no environment variables were set)
-   - Open your deployed app
-   - Click **Settings** (⚙️) in the sidebar
-   - Go to **AI Setup** tab
-   - Select your preferred AI provider
-   - Enter your API key
-   - Click **Save & Test Connection**
-
-📖 **Detailed deployment guide**: See [AMPLIFY_DEPLOYMENT.md](AMPLIFY_DEPLOYMENT.md)
+**Other platforms:** Netlify, AWS Amplify, Firebase Hosting, etc.
+- All work with the built `dist/` folder
+- Users configure AI keys through the Settings UI
 
 ## ⚙️ Setup AI Provider (Choose one):
    
