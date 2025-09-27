@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react'
 import { AIService } from '../lib/ai-service'
 import { useAI } from './AIContext'
+import { generateUUID } from '../lib/utils'
 
 export interface Message {
   id: string
@@ -280,7 +281,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   const createNewSession = (): ChatSession => {
     const newSession: ChatSession = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       title: 'New Chat',
       messages: [],
       createdAt: new Date(),
@@ -352,7 +353,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     if (!sessionId) return
 
     const userMessage: Message = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       content,
       isUser: true,
       timestamp: new Date(),
@@ -373,7 +374,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       const aiResponse = await generateAIResponse(content, session?.messages || [])
       
       const aiMessage: Message = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         content: aiResponse,
         isUser: false,
         timestamp: new Date()
@@ -383,7 +384,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error generating response:', error)
       const errorMessage: Message = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         content: "I'm sorry, I encountered an error while processing your message. Please try again.",
         isUser: false,
         timestamp: new Date()
@@ -410,7 +411,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       const aiResponse = await generateAIResponse(previousMessage.content, currentSession.messages.slice(0, messageIndex - 1))
       
       const newMessage: Message = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         content: aiResponse,
         isUser: false,
         timestamp: new Date()
@@ -472,7 +473,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         // Multiple sessions
         const sessions = data.map(session => ({
           ...session,
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           createdAt: new Date(session.createdAt),
           updatedAt: new Date(session.updatedAt || session.createdAt),
           messages: session.messages.map((msg: any) => ({
@@ -485,7 +486,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         // Single session
         const session: ChatSession = {
           ...data,
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           createdAt: new Date(data.createdAt),
           updatedAt: new Date(data.updatedAt || data.createdAt),
           messages: data.messages.map((msg: any) => ({

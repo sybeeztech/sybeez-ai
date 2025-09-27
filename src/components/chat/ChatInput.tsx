@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { type Attachment } from "@/contexts/ChatContext"
+import { generateUUID } from "@/lib/utils"
 
 interface ChatInputProps {
   onSendMessage: (message: string, attachments?: Attachment[]) => void
@@ -44,7 +45,7 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
       }
 
       const attachment: Attachment = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         name: file.name,
         size: file.size,
         type: file.type,
@@ -99,7 +100,7 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
       recorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'audio/webm' })
         const attachment: Attachment = {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           name: `Voice message ${new Date().toLocaleTimeString()}.webm`,
           size: blob.size,
           type: 'audio/webm',

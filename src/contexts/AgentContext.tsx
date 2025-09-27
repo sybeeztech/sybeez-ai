@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react'
+import { generateUUID } from '../lib/utils'
 
 // TypeScript declarations for Speech Recognition API
 declare global {
@@ -192,7 +193,7 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
   const executeAction = useCallback(async (actionData: Omit<AgentAction, 'id' | 'timestamp' | 'status'>) => {
     const action: AgentAction = {
       ...actionData,
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       timestamp: new Date(),
       status: 'pending'
     }
