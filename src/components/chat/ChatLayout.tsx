@@ -100,7 +100,7 @@ export function ChatLayout() {
   }, [])
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-background lg:overflow-hidden">
       {/* Mobile backdrop with better performance */}
       {isMobile && sidebarOpen && (
         <div
@@ -142,11 +142,14 @@ export function ChatLayout() {
       </div>
 
       {/* Main Content with improved mobile layout */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
+      <div className={cn(
+        "flex-1 flex flex-col min-w-0 relative",
+        isMobile ? "h-screen overflow-auto" : "h-full overflow-hidden"
+      )}>
         
         {/* Mobile Header - Fixed positioning for better scrolling */}
         {isMobile && (
-          <header className="flex items-center justify-between gap-3 p-3 border-b border-border bg-background/95 backdrop-blur-md flex-shrink-0 relative z-30">
+          <header className="flex items-center justify-between gap-3 p-3 border-b border-border bg-background/95 backdrop-blur-md flex-shrink-0 sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
@@ -204,9 +207,12 @@ export function ChatLayout() {
           </div>
         )}
 
-        {/* Chat Area - Optimized for performance */}
-        <div className="flex-1 min-h-0 overflow-hidden relative">
-          <ChatArea className="h-full" />
+        {/* Chat Area - Mobile optimized */}
+        <div className={cn(
+          "flex-1 relative",
+          isMobile ? "min-h-0" : "min-h-0 overflow-hidden"
+        )}>
+          <ChatArea className={isMobile ? "flex-1" : "h-full"} />
           
           {/* Resize handle for desktop */}
           {!isMobile && sidebarOpen && !isCollapsed && (

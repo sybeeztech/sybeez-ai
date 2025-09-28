@@ -80,18 +80,22 @@ All colors MUST be HSL.
 
   /* Mobile scrolling fixes */
   @media (max-width: 1024px) {
-    html, body {
+    html {
       height: 100%;
-      overflow: hidden;
+    }
+    
+    body {
+      height: 100%;
+      overflow: auto;
       -webkit-overflow-scrolling: touch;
-      -webkit-transform: translateZ(0);
-      transform: translateZ(0);
     }
     
     #root {
       height: 100vh;
       height: 100dvh; /* Dynamic viewport height for mobile */
-      overflow: hidden;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
     }
   }
 
