@@ -141,12 +141,12 @@ export function ChatLayout() {
         </div>
       </div>
 
-      {/* Main Content with improved layout */}
-      <div className="flex-1 flex flex-col min-w-0 h-full max-h-screen overflow-hidden relative">
+      {/* Main Content with improved mobile layout */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
         
-        {/* Mobile Header - Enhanced */}
+        {/* Mobile Header - Fixed positioning for better scrolling */}
         {isMobile && (
-          <header className="flex items-center justify-between gap-3 p-3 border-b border-border bg-background/95 backdrop-blur-md sticky top-0 z-30 flex-shrink-0">
+          <header className="flex items-center justify-between gap-3 p-3 border-b border-border bg-background/95 backdrop-blur-md flex-shrink-0 relative z-30">
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"

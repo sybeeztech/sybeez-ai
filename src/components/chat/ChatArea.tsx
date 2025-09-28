@@ -59,12 +59,15 @@ export function ChatArea({ className }: ChatAreaProps) {
   }, [handleKeyDown])
 
   return (
-    <div className={cn("flex flex-col h-full max-h-full overflow-hidden", className)}>
+    <div className={cn("flex flex-col h-full overflow-hidden", className)}>
       {/* Chat Messages - Scrollable area with search support */}
       <div 
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-2 lg:px-6 lg:py-4 scroll-smooth overscroll-contain"
-        style={{ scrollBehavior: 'smooth' }}
+        className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-2 lg:px-6 lg:py-4 scroll-smooth"
+        style={{ 
+          scrollBehavior: 'smooth',
+          WebkitOverflowScrolling: 'touch' // Better mobile scrolling
+        }}
       >
         {!currentSession || currentSession.messages.length === 0 ? (
           <div className="flex items-center justify-center min-h-full">
