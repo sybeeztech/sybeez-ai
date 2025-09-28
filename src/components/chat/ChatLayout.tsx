@@ -25,22 +25,41 @@ export function ChatLayout() {
   // Enable keyboard shortcuts
   useKeyboardShortcuts()
 
+  // Handle body scroll lock on mobile when sidebar is open
+  useEffect(() => {
+    if (isMobile) {
+      if (sidebarOpen) {
+        // Lock body scroll when sidebar is open on mobile
+        document.body.style.overflow = 'hidden'
+      } else {
+        // Restore body scroll when sidebar is closed
+        document.body.style.overflow = 'auto'
+      }
+    } else {
+      // Always allow body scroll on desktop
+      document.body.style.overflow = 'auto'
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto'
+    }
+  }, [isMobile, sidebarOpen])
+
   // Handle responsive behavior
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 1024
+      console.log('Resize detected, mobile:', mobile, 'window width:', window.innerWidth)
       setIsMobile(mobile)
       
-      // Auto-close sidebar on mobile when screen gets too small
-      if (mobile && sidebarOpen) {
-        setSidebarOpen(false)
-      }
+      // Only auto-close sidebar on mobile when transitioning from desktop to mobile
+      // But allow manual control on mobile
     }
 
     handleResize() // Initial check
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [sidebarOpen])
+  }, [])
 
   // Save sidebar state to localStorage
   useEffect(() => {
@@ -88,8 +107,9 @@ export function ChatLayout() {
   }, [isMobile, sidebarOpen])
 
   const toggleSidebar = useCallback(() => {
+    console.log('toggleSidebar called, current state:', sidebarOpen, 'isMobile:', isMobile)
     setSidebarOpen(prev => !prev)
-  }, [])
+  }, [sidebarOpen, isMobile])
 
   const closeSidebar = useCallback(() => {
     setSidebarOpen(false)
@@ -101,12 +121,13 @@ export function ChatLayout() {
 
   return (
     <div className="flex h-screen bg-background lg:overflow-hidden">
-      {/* Mobile backdrop with better performance */}
+      {/* Mobile backdrop with better performance - doesn't interfere with sidebar scrolling */}
       {isMobile && sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-in fade-in duration-200"
           onClick={closeSidebar}
           aria-label="Close sidebar"
+          style={{ touchAction: 'none' }}
         />
       )}
 
@@ -132,11 +153,13 @@ export function ChatLayout() {
             isMobile ? "w-full" : (sidebarOpen ? (isCollapsed ? "w-16" : "w-64") : "w-0"),
             !sidebarOpen && !isMobile && "opacity-0 pointer-events-none"
           )}
+          style={isMobile ? { 
+            touchAction: 'pan-y',
+            overscrollBehavior: 'contain'
+          } : {}}
         >
           <ChatSidebar 
             className="h-full"
-            isCollapsed={!isMobile && isCollapsed}
-            onToggleCollapse={!isMobile ? toggleCollapse : undefined}
           />
         </div>
       </div>
@@ -144,75 +167,23 @@ export function ChatLayout() {
       {/* Main Content with improved mobile layout */}
       <div className={cn(
         "flex-1 flex flex-col min-w-0 relative",
-        isMobile ? "h-screen overflow-auto" : "h-full overflow-hidden"
+        // Mobile: always use full height, scrolling happens inside chat area
+        // Desktop: standard overflow handling
+        isMobile ? "h-screen" : "h-full overflow-hidden"
       )}>
         
-        {/* Mobile Header - Fixed positioning for better scrolling */}
-        {isMobile && (
-          <header className="flex items-center justify-between gap-3 p-3 border-b border-border bg-background/95 backdrop-blur-md flex-shrink-0 sticky top-0 z-30">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleSidebar}
-                className="p-2 hover:bg-muted/80 active:bg-muted"
-                aria-label="Open sidebar"
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg overflow-hidden flex items-center justify-center">
-                  <img 
-                    src="/sybeezlogo.png" 
-                    alt="Sybeez Logo" 
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <span className="font-semibold text-lg">Sybeez</span>
-              </div>
-            </div>
-            
-            {/* Mobile actions */}
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs px-2 py-1"
-                onClick={() => window.open("https://sybeez.com/pro", "_blank")}
-              >
-                Pro
-              </Button>
-            </div>
-          </header>
-        )}
-
-        {/* Desktop Header - Enhanced */}
-        {!isMobile && (
-          <div className="flex-shrink-0 relative">
-            <ChatHeader onToggleSidebar={toggleSidebar} />
-            
-            {/* Sidebar Toggle Button for Desktop */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "absolute left-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 opacity-70 hover:opacity-100 transition-opacity z-10",
-                sidebarOpen && "hidden"
-              )}
-              onClick={toggleSidebar}
-              title="Show sidebar (Ctrl+B)"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        )}
+        {/* Unified Header for both Mobile and Desktop */}
+        <div className="flex-shrink-0">
+          <ChatHeader onToggleSidebar={toggleSidebar} />
+        </div>
 
         {/* Chat Area - Mobile optimized */}
         <div className={cn(
-          "flex-1 relative",
-          isMobile ? "min-h-0" : "min-h-0 overflow-hidden"
+          "flex-1 relative overflow-hidden",
+          // Ensure proper height calculation
+          "min-h-0"
         )}>
-          <ChatArea className={isMobile ? "flex-1" : "h-full"} />
+          <ChatArea className="h-full" />
           
           {/* Resize handle for desktop */}
           {!isMobile && sidebarOpen && !isCollapsed && (

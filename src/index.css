@@ -97,6 +97,13 @@ All colors MUST be HSL.
       display: flex;
       flex-direction: column;
     }
+
+    /* Ensure sidebar scrolling works on mobile */
+    .sidebar-scroll {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      scroll-behavior: smooth;
+    }
   }
 
   .dark {

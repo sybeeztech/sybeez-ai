@@ -209,8 +209,14 @@ export function ChatSidebar({ className }: ChatSidebarProps) {
           </div>
         </div>
 
-        {/* Chat History - Scrollable */}
-        <div className="flex-1 overflow-y-auto p-2 min-h-0">
+        {/* Chat History - Scrollable with enhanced mobile support */}
+        <div 
+          className="flex-1 overflow-y-auto p-2 min-h-0 sidebar-scroll" 
+          style={{ 
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain'
+          }}
+        >
           {pinnedSessions.length > 0 && (
             <div className="mb-4">
               <h3 className="text-xs font-medium text-muted-foreground mb-2 px-2">Pinned</h3>
