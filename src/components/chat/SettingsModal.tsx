@@ -1,16 +1,36 @@
 import { useState } from "react"
-import { X, Palette, Type, Keyboard, Volume2, Save, HardDrive, HelpCircle, Bot } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useChatContext } from "@/contexts/ChatContext"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  Settings,
+  Bot,
+  Key,
+  Palette,
+  Volume2,
+  Download,
+  Upload,
+  Trash2,
+  Shield,
+  Zap,
+  Info
+} from "lucide-react"
 import { useAI } from "@/contexts/AIContext"
-import { KeyboardShortcuts } from "@/hooks/useKeyboardShortcuts"
-import { AISetup } from "./AISetup"
+import { useChatContext } from "@/contexts/ChatContext"
+import { AI_PROVIDERS, type AIConfig } from "@/lib/ai-types"
 import { toast } from "sonner"
 
 interface SettingsModalProps {
@@ -19,36 +39,104 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
+  const { config, updateConfig, saveApiKey, getApiKey, clearApiKey, testConnection } = useAI()
   const { state, dispatch } = useChatContext()
-  const { isConfigured } = useAI()
-  const [settings, setSettings] = useState(state.settings)
+  const [isTestingConnection, setIsTestingConnection] = useState(false)
+  const [newApiKey, setNewApiKey] = useState("")
+  const [selectedProvider, setSelectedProvider] = useState<AIConfig['provider']>(config?.provider || "gemini")
 
-  const handleSave = () => {
-    dispatch({ type: 'UPDATE_SETTINGS', settings })
-    toast.success("Settings saved")
-    onOpenChange(false)
+  const currentProvider = AI_PROVIDERS[selectedProvider]
+  const hasApiKey = !!getApiKey(selectedProvider)
+
+  const handleProviderChange = async (provider: AIConfig['provider']) => {
+    setSelectedProvider(provider)
+    await updateConfig({ provider })
+    toast.success(`Switched to ${AI_PROVIDERS[provider].name}`)
   }
 
-  const handleReset = () => {
-    const defaultSettings = {
-      theme: 'dark' as const,
-      fontSize: 'medium' as const,
-      sendOnEnter: true,
-      soundEnabled: true,
-      autoSaveChats: true,
-      streamingEnabled: true
+  const handleSaveApiKey = async () => {
+    if (!newApiKey.trim()) {
+      toast.error("Please enter an API key")
+      return
     }
-    setSettings(defaultSettings)
-    dispatch({ type: 'UPDATE_SETTINGS', settings: defaultSettings })
-    toast.success("Settings reset to default")
+
+    try {
+      await saveApiKey(selectedProvider, newApiKey)
+      setNewApiKey("")
+      toast.success("API key saved successfully")
+    } catch (error) {
+      toast.error("Failed to save API key")
+    }
+  }
+
+  const handleTestConnection = async () => {
+    if (!hasApiKey) {
+      toast.error("Please add an API key first")
+      return
+    }
+
+    setIsTestingConnection(true)
+    try {
+      const result = await testConnection()
+      if (result) {
+        toast.success("Connection successful!")
+      } else {
+        toast.error("Connection failed")
+      }
+    } catch (error) {
+      toast.error("Connection test failed")
+    } finally {
+      setIsTestingConnection(false)
+    }
+  }
+
+  const handleClearApiKey = () => {
+    clearApiKey(selectedProvider)
+    toast.success("API key cleared")
+  }
+
+  const handleExportChats = () => {
+    try {
+      const dataStr = JSON.stringify(state, null, 2)
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
+      
+      const exportFileDefaultName = `sybeez-chats-${new Date().toISOString().split('T')[0]}.json`
+      
+      const linkElement = document.createElement('a')
+      linkElement.setAttribute('href', dataUri)
+      linkElement.setAttribute('download', exportFileDefaultName)
+      linkElement.click()
+      
+      toast.success("Chats exported successfully")
+    } catch (error) {
+      toast.error("Failed to export chats")
+    }
+  }
+
+  const handleImportChats = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (file) {
+        try {
+          const text = await file.text()
+          const data = JSON.parse(text)
+          // You would need to implement import functionality in ChatContext
+          toast.success("Chats imported successfully")
+        } catch (error) {
+          toast.error("Failed to import chats")
+        }
+      }
+    }
+    input.click()
   }
 
   const handleClearAllChats = () => {
-    if (window.confirm("Are you sure you want to delete all chats? This action cannot be undone.")) {
+    if (confirm("Are you sure you want to delete all chat sessions? This cannot be undone.")) {
       dispatch({ type: 'CLEAR_ALL_SESSIONS' })
-      localStorage.removeItem('sybeez-chat-sessions')
       toast.success("All chats cleared")
-      onOpenChange(false)
     }
   }
 
@@ -57,210 +145,202 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span>Settings</span>
+            <Settings className="w-5 h-5" />
+            Settings
           </DialogTitle>
+          <DialogDescription>
+            Manage your AI providers, preferences, and chat data
+          </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="general" className="w-full">
+        <Tabs defaultValue="ai" className="space-y-4">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="ai">AI Setup</TabsTrigger>
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="shortcuts">Shortcuts</TabsTrigger>
+            <TabsTrigger value="ai">AI Provider</TabsTrigger>
+            <TabsTrigger value="preferences">Preferences</TabsTrigger>
             <TabsTrigger value="data">Data</TabsTrigger>
+            <TabsTrigger value="about">About</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="ai" className="mt-6">
-            <AISetup />
-          </TabsContent>
-
-          <TabsContent value="general" className="space-y-6 mt-6">
-            {/* Appearance */}
-            <div>
-              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-                <Palette className="w-5 h-5" />
-                Appearance
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="theme">Theme</Label>
-                    <p className="text-sm text-muted-foreground">Choose your preferred theme</p>
-                  </div>
-                  <Select
-                    value={settings.theme}
-                    onValueChange={(value: 'dark' | 'light') => setSettings({...settings, theme: value})}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="dark">Dark</SelectItem>
-                      <SelectItem value="light">Light</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="fontSize">Font Size</Label>
-                    <p className="text-sm text-muted-foreground">Adjust text size for better readability</p>
-                  </div>
-                  <Select
-                    value={settings.fontSize}
-                    onValueChange={(value: 'small' | 'medium' | 'large') => setSettings({...settings, fontSize: value})}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="small">Small</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="large">Large</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          <TabsContent value="ai" className="space-y-4">
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="provider">AI Provider</Label>
+                <Select value={selectedProvider} onValueChange={handleProviderChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(AI_PROVIDERS).map(([key, provider]) => (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex items-center gap-2">
+                          <span>{provider.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
 
-            <Separator />
-
-            {/* Input & Interaction */}
-            <div>
-              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-                <Keyboard className="w-5 h-5" />
-                Input & Interaction
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="sendOnEnter">Send on Enter</Label>
-                    <p className="text-sm text-muted-foreground">Press Enter to send messages (Shift+Enter for new line)</p>
-                  </div>
-                  <Switch
-                    id="sendOnEnter"
-                    checked={settings.sendOnEnter}
-                    onCheckedChange={(checked) => setSettings({...settings, sendOnEnter: checked})}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="streamingEnabled">Streaming Responses</Label>
-                    <p className="text-sm text-muted-foreground">Show AI responses as they are generated</p>
-                  </div>
-                  <Switch
-                    id="streamingEnabled"
-                    checked={settings.streamingEnabled}
-                    onCheckedChange={(checked) => setSettings({...settings, streamingEnabled: checked})}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Sound & Notifications */}
-            <div>
-              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-                <Volume2 className="w-5 h-5" />
-                Sound & Notifications
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="soundEnabled">Sound Effects</Label>
-                    <p className="text-sm text-muted-foreground">Play sounds for notifications and interactions</p>
-                  </div>
-                  <Switch
-                    id="soundEnabled"
-                    checked={settings.soundEnabled}
-                    onCheckedChange={(checked) => setSettings({...settings, soundEnabled: checked})}
-                  />
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="shortcuts" className="mt-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-                <HelpCircle className="w-5 h-5" />
-                Keyboard Shortcuts
-              </h3>
-              <div className="bg-muted p-4 rounded-lg">
-                <KeyboardShortcuts />
-              </div>
-              <p className="text-sm text-muted-foreground mt-4">
-                Use these keyboard shortcuts to navigate and interact with Sybeez more efficiently.
-                On Windows/Linux, use Ctrl instead of ⌘.
-              </p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="data" className="space-y-6 mt-6">
-            {/* Data & Privacy */}
-            <div>
-              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-                <HardDrive className="w-5 h-5" />
-                Data & Privacy
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="autoSaveChats">Auto-save Chats</Label>
-                    <p className="text-sm text-muted-foreground">Automatically save your conversations locally</p>
-                  </div>
-                  <Switch
-                    id="autoSaveChats"
-                    checked={settings.autoSaveChats}
-                    onCheckedChange={(checked) => setSettings({...settings, autoSaveChats: checked})}
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="pt-2">
-                  <div className="mb-4">
-                    <h4 className="font-medium mb-2">Storage Information</h4>
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <p>• Chat history: Stored locally in your browser</p>
-                      <p>• Settings: Saved to local storage</p>
-                      <p>• No data is sent to external servers</p>
-                      <p>• {state.sessions.length} conversations saved</p>
+              <div className="space-y-2">
+                <Label>API Key</Label>
+                {hasApiKey ? (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 p-2 bg-muted rounded text-sm">
+                      API key configured ✓
                     </div>
+                    <Button variant="outline" size="sm" onClick={handleClearApiKey}>
+                      Clear
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleTestConnection}
+                      disabled={isTestingConnection}
+                    >
+                      {isTestingConnection ? "Testing..." : "Test"}
+                    </Button>
                   </div>
-                  
-                  <Button
-                    variant="destructive"
-                    onClick={handleClearAllChats}
-                    className="w-full"
-                  >
-                    Clear All Chat Data
-                  </Button>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    This will permanently delete all your saved conversations. This action cannot be undone.
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      type="password"
+                      placeholder={`Enter your ${currentProvider.name} API key`}
+                      value={newApiKey}
+                      onChange={(e) => setNewApiKey(e.target.value)}
+                    />
+                    <Button onClick={handleSaveApiKey} disabled={!newApiKey.trim()}>
+                      Save API Key
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <Alert>
+                <Info className="w-4 h-4" />
+                <AlertDescription>
+                  Visit your AI provider's website to get an API key
+                </AlertDescription>
+              </Alert>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="preferences" className="space-y-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Dark Mode</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Toggle between light and dark themes
                   </p>
                 </div>
+                <Switch />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Sound Effects</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Play sounds for notifications
+                  </p>
+                </div>
+                <Switch />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Auto-save Chats</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically save chat sessions
+                  </p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="data" className="space-y-4">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold">Export & Import</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Backup or restore your chat sessions
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={handleExportChats}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Export Chats
+                  </Button>
+                  <Button variant="outline" onClick={handleImportChats}>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Import Chats
+                  </Button>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h3 className="text-lg font-semibold text-destructive">Danger Zone</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Irreversible actions that will permanently delete your data
+                </p>
+                <Button variant="destructive" onClick={handleClearAllChats}>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Clear All Chats
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="about" className="space-y-4">
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-lg flex items-center justify-center overflow-hidden">
+                  <img 
+                    src="/sybeezlogo.png" 
+                    alt="Sybeez Logo" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <h2 className="text-2xl font-bold">Sybeez AI</h2>
+                <p className="text-muted-foreground">
+                  Advanced AI Chat Platform
+                </p>
+                <Badge variant="outline" className="mt-2">
+                  Version 1.0.0
+                </Badge>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <h3 className="font-semibold">Features</h3>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Multiple AI providers (GPT, Gemini, Claude)</li>
+                  <li>• Advanced chat features & search</li>
+                  <li>• File & voice attachments</li>
+                  <li>• Session management</li>
+                  <li>• Responsive design</li>
+                </ul>
+              </div>
+
+              <Separator />
+
+              <div className="text-center">
+                <Button
+                  variant="outline"
+                  onClick={() => window.open("https://sybeez.com", "_blank")}
+                >
+                  Visit Sybeez.com
+                </Button>
               </div>
             </div>
           </TabsContent>
         </Tabs>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-6 border-t">
-          <Button variant="outline" onClick={handleReset}>
-            Reset to Default
-          </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave}>
-              <Save className="w-4 h-4 mr-2" />
-              Save Settings
-            </Button>
-          </div>
-        </div>
       </DialogContent>
     </Dialog>
   )

@@ -99,6 +99,24 @@ All colors MUST be HSL.
     width: 6px;
   }
 
+  /* Mobile Safari viewport fixes */
+  html {
+    height: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
   ::-webkit-scrollbar-track {
     @apply bg-transparent;
   }
@@ -113,6 +131,15 @@ All colors MUST be HSL.
 }
 
 @layer components {
+  /* Mobile touch optimizations */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  button, [role="button"] {
+    touch-action: manipulation;
+  }
+  
   /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .sidebar-item {

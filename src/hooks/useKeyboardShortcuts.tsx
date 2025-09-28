@@ -31,9 +31,16 @@ export function useKeyboardShortcuts() {
         case '/':
           // Ctrl/Cmd + /: Focus search
           e.preventDefault()
-          const searchInput = document.querySelector('input[placeholder="Search chats..."]') as HTMLInputElement
-          if (searchInput) {
-            searchInput.focus()
+          // First try conversation search
+          const conversationSearchBtn = document.querySelector('[title="Search in conversation"]') as HTMLButtonElement
+          if (conversationSearchBtn) {
+            conversationSearchBtn.click()
+          } else {
+            // Fallback to sidebar search
+            const searchInput = document.querySelector('input[placeholder="Search chats..."]') as HTMLInputElement
+            if (searchInput) {
+              searchInput.focus()
+            }
           }
           break
         
@@ -64,6 +71,37 @@ export function useKeyboardShortcuts() {
           }
           break
       }
+
+      // Handle search navigation shortcuts (without modifiers)
+      if (!modifier && !e.shiftKey && !e.altKey) {
+        const searchInput = document.querySelector('input[placeholder="Search in conversation..."]') as HTMLInputElement
+        const isSearchActive = searchInput && document.activeElement === searchInput
+        
+        if (isSearchActive) {
+          switch (e.key) {
+            case 'ArrowDown':
+            case 'Enter':
+              e.preventDefault()
+              const nextBtn = document.querySelector('[title*="next"]') as HTMLButtonElement ||
+                              searchInput.parentElement?.querySelector('button:has([class*="ChevronDown"])') as HTMLButtonElement
+              if (nextBtn) nextBtn.click()
+              break
+              
+            case 'ArrowUp':
+              e.preventDefault()
+              const prevBtn = document.querySelector('[title*="prev"]') as HTMLButtonElement ||
+                              searchInput.parentElement?.querySelector('button:has([class*="ChevronUp"])') as HTMLButtonElement
+              if (prevBtn) prevBtn.click()
+              break
+              
+            case 'Escape':
+              e.preventDefault()
+              const closeBtn = searchInput.parentElement?.querySelector('button:has([class*="X"])') as HTMLButtonElement
+              if (closeBtn) closeBtn.click()
+              break
+          }
+        }
+      }
     }
 
     document.addEventListener('keydown', handleKeyDown)
@@ -78,12 +116,14 @@ export function KeyboardShortcuts() {
   const shortcuts = [
     { key: '⌘ + N', action: 'New Chat' },
     { key: '⌘ + S', action: 'Export Chat' },
-    { key: '⌘ + /', action: 'Search Chats' },
+    { key: '⌘ + /', action: 'Search in Conversation' },
     { key: '⌘ + K', action: 'Focus Input' },
     { key: '⌘ + 1-9', action: 'Switch Chat' },
+    { key: '↓ or Enter', action: 'Next Search Result' },
+    { key: '↑', action: 'Previous Search Result' },
+    { key: 'Esc', action: 'Close Search' },
     { key: 'Enter', action: 'Send Message' },
     { key: 'Shift + Enter', action: 'New Line' },
-    { key: 'Esc', action: 'Cancel Edit' },
   ]
 
   return (

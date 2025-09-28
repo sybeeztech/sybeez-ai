@@ -32,9 +32,9 @@ interface ChatSidebarProps {
 }
 
 const sidebarItems = [
-  { icon: BookOpen, label: "Library", type: "link" },
-  { icon: Sparkles, label: "Sybeez AI", type: "link" },
-  { icon: Presentation, label: "Smart Slides", type: "link" },
+  { icon: BookOpen, label: "Library", type: "link", path: "/library" },
+  { icon: Sparkles, label: "Sybeez AI", type: "link", path: "/" },
+  { icon: Presentation, label: "Smart Slides", type: "link", path: "/slides" },
 ]
 
 export function ChatSidebar({ className }: ChatSidebarProps) {

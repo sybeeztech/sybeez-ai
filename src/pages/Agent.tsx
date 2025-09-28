@@ -14,32 +14,36 @@ export function AgentPage() {
       {showDashboard ? (
         <div>
           {/* Header */}
-          <div className="border-b border-border bg-background sticky top-0 z-50">
-            <div className="flex items-center justify-between px-6 py-4">
-              <div className="flex items-center gap-3">
-                <img 
-                  src="/sybeezlogo.png" 
-                  alt="Sybeez" 
-                  className="w-8 h-8"
-                />
-                <h1 className="text-lg font-semibold">Sybeez AI Agent</h1>
+          <div className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+            <div className="flex items-center justify-between p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center overflow-hidden">
+                    <img 
+                      src="/sybeezlogo.png" 
+                      alt="Sybeez Logo" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <h1 className="text-base sm:text-lg font-semibold">Sybeez AI Agent</h1>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                 <Button
                   variant="outline"
                   onClick={() => navigate('/')}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-xs px-2 sm:px-3"
                 >
-                  <Home className="w-4 h-4" />
-                  Home
+                  <Home className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Home</span>
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setShowDashboard(false)}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-xs px-2 sm:px-3"
                 >
-                  <MessageSquare className="w-4 h-4" />
-                  Chat Mode
+                  <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Chat Mode</span>
                 </Button>
               </div>
             </div>
